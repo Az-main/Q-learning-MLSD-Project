@@ -1,0 +1,26 @@
+{
+  "q_learning": {
+    "total_reward": 18197.3,
+    "service_level": 0.86,
+    "stockout_rate": 0.466,
+    "avg_leftover": 3.92
+  },
+  "random": {
+    "total_reward": 12979.6,
+    "service_level": 0.813,
+    "stockout_rate": 0.268,
+    "avg_leftover": 27.28
+  },
+  "always_order_20": {
+    "total_reward": 15258.0,
+    "service_level": 0.866,
+    "stockout_rate": 0.381,
+    "avg_leftover": 27.75
+  },
+  "order_recent_avg": {
+    "total_reward": 16589.1,
+    "service_level": 0.887,
+    "stockout_rate": 0.337,
+    "avg_leftover": 26.47
+  }
+}

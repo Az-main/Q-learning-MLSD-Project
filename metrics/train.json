@@ -1,0 +1,6 @@
+{
+  "episodes": 600,
+  "gamma": 0.95,
+  "avg_reward_first_50": 1871.44,
+  "avg_reward_last_50": 2755.28
+}

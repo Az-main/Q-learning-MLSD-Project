@@ -42,3 +42,209 @@ stages:
       hash: md5
       md5: d7a659ce1738803029cdecb0d46afd5d
       size: 16922
+  train:
+    cmd: python src/train.py
+    deps:
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: d7a659ce1738803029cdecb0d46afd5d
+      size: 16922
+    - path: src/agent.py
+      hash: md5
+      md5: a77ea0d9eb2a84a2b01788d874e81519
+      size: 1911
+    - path: src/env.py
+      hash: md5
+      md5: 1a6a79af965469e24cc369fedb4a944a
+      size: 2512
+    - path: src/train.py
+      hash: md5
+      md5: 39e9f61e6d0842795b9f3743d9e78e37
+      size: 2342
+    - path: src/utils.py
+      hash: md5
+      md5: f15efb65ca98201dd814d646aa15c9b7
+      size: 566
+    params:
+      params.yaml:
+        env:
+          actions:
+          - 0
+          - 10
+          - 20
+          - 40
+          stock_bins:
+          - 5
+          - 10
+          - 20
+          - 30
+          - 45
+          - 60
+          - 80
+          capacity: 100
+          initial_stock: 20
+          episode_length: 60
+          price: 5.0
+          order_cost: 2.0
+          holding_cost: 0.3
+          stockout_penalty: 2.0
+        train:
+          alpha: 0.1
+          gamma: 0.95
+          epsilon_start: 1.0
+          epsilon_end: 0.05
+          episodes: 600
+          seed: 42
+    outs:
+    - path: metrics/plots/training_curve.csv
+      hash: md5
+      md5: 7fd9e75bea2626609413393bf3264dba
+      size: 7103
+    - path: metrics/train.json
+      hash: md5
+      md5: de5edc455de6747aba91828cf7651373
+      size: 110
+    - path: models/q_table.json
+      hash: md5
+      md5: 5dc8dba0949efad5d839efe2c7625063
+      size: 16629
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+    - path: data/processed/test.parquet
+      hash: md5
+      md5: a06044f214ae8af44ab41f7dad6645fe
+      size: 9007
+    - path: models/q_table.json
+      hash: md5
+      md5: 5dc8dba0949efad5d839efe2c7625063
+      size: 16629
+    - path: src/agent.py
+      hash: md5
+      md5: a77ea0d9eb2a84a2b01788d874e81519
+      size: 1911
+    - path: src/env.py
+      hash: md5
+      md5: 1a6a79af965469e24cc369fedb4a944a
+      size: 2512
+    - path: src/evaluate.py
+      hash: md5
+      md5: 85c92d945e60aae24b27e16fad9feea6
+      size: 3097
+    - path: src/utils.py
+      hash: md5
+      md5: f15efb65ca98201dd814d646aa15c9b7
+      size: 566
+    params:
+      params.yaml:
+        env:
+          actions:
+          - 0
+          - 10
+          - 20
+          - 40
+          stock_bins:
+          - 5
+          - 10
+          - 20
+          - 30
+          - 45
+          - 60
+          - 80
+          capacity: 100
+          initial_stock: 20
+          episode_length: 60
+          price: 5.0
+          order_cost: 2.0
+          holding_cost: 0.3
+          stockout_penalty: 2.0
+    outs:
+    - path: metrics/eval.json
+      hash: md5
+      md5: 403965d5d5cdf886f85e5a6ec7c6c36a
+      size: 568
+    - path: results/policy_comparison.png
+      hash: md5
+      md5: 698cdddb295b20c0fc17ee8f149f3fac
+      size: 25422
+  online_drift:
+    cmd: python src/online_drift.py
+    deps:
+    - path: data/processed/stream.parquet
+      hash: md5
+      md5: c8c8c771dd2d1e54b189daf31749271e
+      size: 9340
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: d7a659ce1738803029cdecb0d46afd5d
+      size: 16922
+    - path: models/q_table.json
+      hash: md5
+      md5: 5dc8dba0949efad5d839efe2c7625063
+      size: 16629
+    - path: src/agent.py
+      hash: md5
+      md5: a77ea0d9eb2a84a2b01788d874e81519
+      size: 1911
+    - path: src/env.py
+      hash: md5
+      md5: 1a6a79af965469e24cc369fedb4a944a
+      size: 2512
+    - path: src/online_drift.py
+      hash: md5
+      md5: cb5388de862711240b25dd286f4e6719
+      size: 7425
+    - path: src/utils.py
+      hash: md5
+      md5: f15efb65ca98201dd814d646aa15c9b7
+      size: 566
+    params:
+      params.yaml:
+        drift:
+          adwin_delta: 0.002
+          respond: true
+          retrain_window: 14
+          retrain_passes: 50
+          retrain_alpha: 0.2
+          retrain_epsilon: 0.2
+        env:
+          actions:
+          - 0
+          - 10
+          - 20
+          - 40
+          stock_bins:
+          - 5
+          - 10
+          - 20
+          - 30
+          - 45
+          - 60
+          - 80
+          capacity: 100
+          initial_stock: 20
+          episode_length: 60
+          price: 5.0
+          order_cost: 2.0
+          holding_cost: 0.3
+          stockout_penalty: 2.0
+        online:
+          alpha: 0.05
+          epsilon: 0.05
+          river_lr: 0.01
+        prepare.drift_start: '2016-07-01'
+        train.gamma: 0.95
+        train.seed: 42
+    outs:
+    - path: metrics/drift.json
+      hash: md5
+      md5: 35f91f138f2791ddcc07c4c96f2fd209
+      size: 402
+    - path: metrics/plots/online_rewards.csv
+      hash: md5
+      md5: 0d1c9664bde2869c8fcadbbc29b26810
+      size: 5805
+    - path: results/online_drift.png
+      hash: md5
+      md5: e8dbc5b9a2c45a8aa4da28afc607c074
+      size: 70327
