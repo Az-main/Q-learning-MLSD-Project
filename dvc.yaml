@@ -1,0 +1,116 @@
+# dvc.yaml - the pipeline.
+# For each stage DVC records the hash of every `deps`, `params` and `outs` entry in dvc.lock.
+# `dvc repro` reruns a stage only if one of those hashes changed.
+#
+#   data/raw/sales.csv.dvc
+#            |
+#         prepare
+#         /     \
+#     train      |
+#     /   \      |
+# evaluate  online_drift   (bonus: River + drift detection)
+
+stages:
+  prepare:
+    cmd: python src/prepare.py
+    deps:
+      - src/prepare.py
+      - src/utils.py
+      - data/raw/sales.csv
+    params:
+      - prepare
+    outs:
+      - data/processed/train.parquet
+      - data/processed/stream.parquet
+      - data/processed/test.parquet
+      - data/processed/meta.json
+
+  train:
+    cmd: python src/train.py
+    deps:
+      - src/train.py
+      - src/agent.py
+      - src/env.py
+      - src/utils.py
+      - data/processed/train.parquet
+    params:
+      - env
+      - train
+    outs:
+      - models/q_table.json
+    metrics:
+      - metrics/train.json:
+          cache: false
+    plots:
+      - metrics/plots/training_curve.csv:
+          cache: false
+          x: episode
+          y: total_reward
+
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+      - src/evaluate.py
+      - src/agent.py
+      - src/env.py
+      - src/utils.py
+      - models/q_table.json
+      - data/processed/test.parquet
+    params:
+      - env
+    metrics:
+      - metrics/eval.json:
+          cache: false
+    outs:
+      - results/policy_comparison.png:
+          cache: false
+
+  online_drift:
+    cmd: python src/online_drift.py
+    deps:
+      - src/online_drift.py
+      - src/agent.py
+      - src/env.py
+      - src/utils.py
+      - models/q_table.json
+      - data/processed/train.parquet
+      - data/processed/stream.parquet
+    params:
+      - env
+      - online
+      - drift
+      - train.gamma
+      - train.seed
+      - prepare.drift_start
+    metrics:
+      - metrics/drift.json:
+          cache: false
+    plots:
+      - metrics/plots/online_rewards.csv:
+          cache: false
+          x: day
+          y: rolling_reward
+    outs:
+      - results/online_drift.png:
+          cache: false
+
+# ---------------------------------------------------------------------------
+# OPTIONAL bonus stage - Feast feature store.
+# Only uncomment after `pip install -r requirements-feast.txt` works on your PC.
+# To uncomment: delete ONLY the leading "#" on each line below.
+# ---------------------------------------------------------------------------
+#  feast_serve:
+#    cmd: python src/feast_serve.py
+#    deps:
+#      - src/feast_serve.py
+#      - src/utils.py
+#      - feature_repo/features.py
+#      - feature_repo/feature_store.yaml
+#      - data/processed/train.parquet
+#      - data/processed/test.parquet
+#      - models/q_table.json
+#    params:
+#      - env
+#    metrics:
+#      - metrics/feast.json:
+#          cache: false

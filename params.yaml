@@ -1,0 +1,48 @@
+# params.yaml
+# Every tunable value in the project lives here.
+# DVC hashes the keys each stage lists under `params:` in dvc.yaml.
+# Change a value -> `dvc status` shows which stages are now stale -> `dvc repro` reruns only those.
+
+prepare:
+  store_id: 1
+  item_id: 1
+  train_end: "2015-12-31"      # train  = start ........ train_end
+  stream_end: "2016-12-31"     # stream = train_end .... stream_end   (used by the online stage)
+                               # test   = stream_end ... end          (used by evaluate)
+  rolling_window: 7            # days in the rolling mean of PAST demand
+  # Simulated sudden demand jump inside the stream period (for the drift demo).
+  # Set drift_factor: 1.0 to switch the simulated drift off.
+  drift_start: "2016-07-01"
+  drift_factor: 2.0
+
+env:
+  actions: [0, 10, 20, 40]     # order quantities the agent can choose
+  stock_bins: [5, 10, 20, 30, 45, 60, 80]   # 7 edges -> 8 stock buckets
+  capacity: 100                # warehouse limit
+  initial_stock: 20
+  episode_length: 60           # days per training episode
+  price: 5.0                   # revenue per unit sold
+  order_cost: 2.0              # paid TODAY for every unit ordered
+  holding_cost: 0.3            # per unit left on the shelf at night
+  stockout_penalty: 2.0        # per unit of demand we could not serve
+
+train:
+  alpha: 0.1                   # learning rate
+  gamma: 0.95                  # discount factor  (try 0.0 in the viva)
+  epsilon_start: 1.0           # exploration at the start
+  epsilon_end: 0.05            # exploration at the end
+  episodes: 600
+  seed: 42
+
+online:
+  alpha: 0.05                  # online Q-learning rate
+  epsilon: 0.05                # online exploration
+  river_lr: 0.01               # SGD learning rate of the River forecaster
+
+drift:
+  adwin_delta: 0.002           # ADWIN sensitivity (smaller = stricter)
+  respond: true                # false = detect drift but do nothing (for the comparison demo)
+  retrain_window: 14           # on drift: retrain on the last 14 days ...
+  retrain_passes: 50           # ... replayed 50 times in the simulator
+  retrain_alpha: 0.2           # learning rate during the retrain
+  retrain_epsilon: 0.2         # exploration during the retrain
