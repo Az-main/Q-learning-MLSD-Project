@@ -33,7 +33,7 @@ Tabular **Q-learning** with ε-greedy exploration.
 ├── models/q_table.json        trained policy (DVC-tracked)
 ├── metrics/                   train/eval/drift JSON + plot CSVs
 ├── results/                   figures
-├── params.yaml  dvc.yaml  dvc.lock  requirements.txt
+├── params.yaml  dvc.yaml  dvc.lock  requirements.txt  .gitattributes
 ```
 
 ## DVC Pipeline
@@ -49,21 +49,24 @@ sales.csv.dvc → prepare → train → evaluate
 | online_drift | q_table, stream.parquet, `online`,`drift` params | drift.json, online_drift.png |
 
 ## How to Run
+Requires **Python 3.11** (Windows / PowerShell shown).
 ```powershell
-git clone <repo-url>
-cd mlsd-inventory-rl
-python -m venv .venv
+git clone https://github.com/Az-main/Q-learning-MLSD-Project.git
+cd Q-learning-MLSD-Project
+py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 dvc pull          # fetch data + model from the DVC remote
-dvc repro         # rebuild anything that is out of date
+dvc status        # everything should be up to date
+dvc repro         # rebuilds only what changed
+dvc dag
 dvc metrics show
-dvc plots show    # opens dvc_plots/index.html
+dvc plots show    # then open dvc_plots/index.html
 ```
-Without remote access: `python tools/get_data.py`, then `dvc repro`.
+The DVC remote is a local folder (`D:\dvcstore`). Without access to it, create the data
+yourself and rebuild: `python tools/get_data.py`, then `dvc repro`.
 
 ## Results
-(Replace these with the numbers from your own `dvc metrics show`.)
 
 | Policy (2017 test year) | Total reward | Service level | Stockout days | Avg leftover |
 |---|---|---|---|---|
