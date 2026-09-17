@@ -1,0 +1,44 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python src/prepare.py
+    deps:
+    - path: data/raw/sales.csv
+      hash: md5
+      md5: b9c68132c8928ec5d24c04f7aa3a5d94
+      size: 34635
+    - path: src/prepare.py
+      hash: md5
+      md5: 82562d7269cec3a33a50fbbd103373fb
+      size: 3514
+    - path: src/utils.py
+      hash: md5
+      md5: f15efb65ca98201dd814d646aa15c9b7
+      size: 566
+    params:
+      params.yaml:
+        prepare:
+          store_id: 1
+          item_id: 1
+          train_end: '2015-12-31'
+          stream_end: '2016-12-31'
+          rolling_window: 7
+          drift_start: '2016-07-01'
+          drift_factor: 2.0
+    outs:
+    - path: data/processed/meta.json
+      hash: md5
+      md5: e1d129aba15580fccafac5382245ea5d
+      size: 146
+    - path: data/processed/stream.parquet
+      hash: md5
+      md5: c8c8c771dd2d1e54b189daf31749271e
+      size: 9340
+    - path: data/processed/test.parquet
+      hash: md5
+      md5: a06044f214ae8af44ab41f7dad6645fe
+      size: 9007
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: d7a659ce1738803029cdecb0d46afd5d
+      size: 16922
