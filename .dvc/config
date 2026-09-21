@@ -2,3 +2,5 @@
     remote = localremote
 ['remote "localremote"']
     url = D:\dvcstore
+['remote "origin"']
+    url = https://dagshub.com/Az-main/Q-learning-MLSD-Project.dvc
