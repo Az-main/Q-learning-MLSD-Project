@@ -1,5 +1,5 @@
 [core]
-    remote = localremote
+    remote = origin
 ['remote "localremote"']
     url = D:\dvcstore
 ['remote "origin"']
