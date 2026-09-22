@@ -49,23 +49,82 @@ sales.csv.dvc → prepare → train → evaluate
 | online_drift | q_table, stream.parquet, `online`,`drift` params | drift.json, online_drift.png |
 
 ## How to Run
-Requires **Python 3.11** (Windows / PowerShell shown).
+
+
+Requires **Python 3.11**. The commands below use Windows PowerShell.
+
+### 1. Clone and create the environment
+
 ```powershell
 git clone https://github.com/Az-main/Q-learning-MLSD-Project.git
 cd Q-learning-MLSD-Project
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-dvc pull          # fetch data + model from the DVC remote
-dvc status        # everything should be up to date
-dvc repro         # rebuilds only what changed
+python -m pip install -r requirements.txt
+```
+
+### 2. Configure DagsHub credentials
+
+The project uses a shared DagsHub DVC remote. For a private repository, every
+collaborator must configure their own DagsHub username and access token:
+
+```powershell
+dvc remote modify origin --local auth basic
+dvc remote modify origin --local user YOUR_DAGSHUB_USERNAME
+dvc remote modify origin --local password YOUR_DAGSHUB_TOKEN
+```
+
+Replace `YOUR_DAGSHUB_USERNAME` and `YOUR_DAGSHUB_TOKEN` with your own values.
+
+Credentials are stored in `.dvc/config.local`, which is ignored by Git. Never
+commit this file or share your access token.
+
+### 3. Download the DVC-tracked files
+
+```powershell
+dvc pull
+```
+
+This downloads the raw data, processed datasets, trained model, and other
+DVC-tracked pipeline outputs from DagsHub.
+
+### 4. Verify and run the project
+
+```powershell
+dvc status
+dvc repro
 dvc dag
 dvc metrics show
-dvc plots show    # then open dvc_plots/index.html
+dvc plots show
+python tests/smoke_test.py
 ```
-The DVC remote is a local folder (`D:\dvcstore`). Without access to it, create the data
-yourself and rebuild: `python tools/get_data.py`, then `dvc repro`.
 
+`dvc status` should report that the data and pipelines are up to date. The
+original `D:\dvcstore` remote is retained only as a local backup on the original
+development PC; DagsHub is the default shared remote.
+
+## Collaboration Workflow
+
+Before starting work, synchronize the Git files and DVC-tracked artifacts:
+
+```powershell
+git pull
+dvc pull
+```
+
+After changing code, parameters, data, or pipeline outputs:
+
+```powershell
+dvc repro
+dvc push
+git status
+git add .
+git commit -m "Describe the change"
+git push
+```
+
+Each contributor should use their own Git branch when working simultaneously.
+This reduces conflicts and allows changes to be reviewed before merging.
 ## Results
 
 | Policy (2017 test year) | Total reward | Service level | Stockout days | Avg leftover |
