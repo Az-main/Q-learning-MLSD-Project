@@ -141,4 +141,24 @@ This reduces conflicts and allows changes to be reviewed before merging.
   after drift was 51.5 with the retrain response and 13.7 without it.
 
 ![policy comparison](results/policy_comparison.png)
-![online drift](results/online_drift.png)
+### Drift Response Comparison
+
+The conditions before the simulated drift are nearly identical. After the
+demand increase, automatic retraining substantially improves performance.
+
+| Metric | Response enabled | Response disabled |
+|---|---:|---:|
+| Average daily reward before drift | 44.07 | 43.84 |
+| Average daily reward after drift | 51.51 | 13.66 |
+| Online total reward | 17,498.2 | 10,493.5 |
+| Retraining events | 3 | 0 |
+
+The final project configuration uses `drift.respond: true`.
+
+#### Response Enabled
+
+![Drift response enabled](results/online_drift_response_true.png)
+
+#### Response Disabled
+
+![Drift response disabled](results/online_drift_response_false.png)

@@ -1,0 +1,18 @@
+{
+  "respond_to_drift": false,
+  "retrain_count": 0,
+  "data_drift_count": 3,
+  "concept_drift_count": 1,
+  "data_drift_dates": [
+    "2016-04-05",
+    "2016-07-05",
+    "2016-12-01"
+  ],
+  "concept_drift_dates": [
+    "2016-07-05"
+  ],
+  "river_forecaster_mae": 6.92,
+  "online_total_reward": 10493.5,
+  "avg_daily_reward_before_drift": 43.84,
+  "avg_daily_reward_after_drift": 13.66
+}
