@@ -1,6 +1,6 @@
 # MLSD DVC Project - Progress and Remaining Plan
 
-Last updated: 2026-09-22
+Last updated: 2026-09-26
 
 ## 1. Project Summary
 
@@ -178,7 +178,7 @@ prepare the final demonstration.
 
 ### Task 1 - Preserve Both Drift Comparison Results
 
-Status: next task
+Status: complete
 
 The response-enabled drift plot currently exists, but both modes should be
 saved separately so the faculty can directly compare them.
@@ -302,10 +302,10 @@ time.
 - Reproduction on the friend's laptop: complete
 - Multi-user Git/DVC access test: complete
 - River and drift bonus implementation: complete
-- Separate drift comparison evidence: remaining
+- Separate drift comparison evidence: complete
 - Feast bonus: optional and remaining
 - Viva and presentation practice: remaining
 
-The project is already in a reproducible and presentable state. The next best
-step is to preserve the two drift experiment modes and document their
-comparison before deciding whether to add Feast.
+The mandatory project and the River/drift bonus are complete and reproducible.
+The remaining choices are whether to implement the optional Feast stage and how
+to prepare the final viva and presentation.
