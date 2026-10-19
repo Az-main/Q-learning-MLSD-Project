@@ -102,7 +102,6 @@ dvc plots show
 - Confirmed that Git tracks the small `sales.csv.dvc` pointer instead of the
   large CSV file.
 - Confirmed that DVC stores files by content hash in `.dvc/cache`.
-- Created the original local DVC remote at `D:\dvcstore` as a backup.
 - Connected the project to a shared DagsHub DVC remote.
 - Made the DagsHub remote named `origin` the default DVC remote.
 - Pushed all required DVC-tracked data and model artifacts to DagsHub.
@@ -110,8 +109,7 @@ dvc plots show
 Current remote arrangement:
 
 ```text
-localremote -> D:\dvcstore
-origin      -> DagsHub DVC storage (default)
+origin -> DagsHub DVC storage (default, only remote)
 ```
 
 ### Pipeline and Results
