@@ -1,59 +1,92 @@
-# Inventory Restocking Agent — DS-4491 MLSD Project
+# Inventory Restocking Agent
 
-A tabular Q-learning agent that decides how much stock to reorder each day,
-built as a reproducible DVC pipeline. Bonus: River online learning, ADWIN drift
-detection with an automatic retraining response, and an optional Feast feature store.
+A small reinforcement learning project: a Q-learning agent that decides how much
+stock a shop should reorder each day. The whole thing runs as a DVC pipeline, so
+anyone can pull the data and get the same results.
 
-## Problem and Dataset
-A shop must decide every day how many units to order. Ordering costs money today,
-leftover stock costs holding fees, and running out loses sales.
+On top of the basic agent, there's an online learning stage (using River) that
+watches for changes in demand and retrains the agent when it spots one. There's
+also an optional Feast feature store setup.
 
-- **Dataset:** Kaggle *Store Item Demand Forecasting Challenge*, store 1 / item 1 —
-  1,826 daily rows (2013–2017). No Kaggle account? `tools/get_data.py` generates a synthetic series.
-- **Split (chronological, never shuffled):** train 2013–2015, stream 2016 (online stage),
-  test 2017 (evaluation).
-- **Simulated drift:** from 2016-07-01, stream demand is multiplied by `drift_factor` (2.0).
-  The test year is left untouched.
+## The problem
 
-## ML Model
-Tabular **Q-learning** with ε-greedy exploration.
-- **State (168):** stock bucket (8) × day of week (7) × demand trend (3)
-- **Actions (4):** order 0, 10, 20 or 40 units (delivered overnight)
-- **Reward:** `5·sold − 2·ordered − 0.3·leftover − 2·unmet`
-- **Update:** `Q(s,a) ← Q(s,a) + α[r + γ·max Q(s',a') − Q(s,a)]`, α=0.1, γ=0.95, 600 episodes
+Every day a shop has to decide how many units to order, and every choice has a
+cost:
 
-## Project Structure
+- order too much and you pay to store the leftovers
+- order too little and you lose sales
+- every order costs money up front
+
+The goal is to find a balance between those three.
+
+## The data
+
+I used store 1, item 1 from Kaggle's *Store Item Demand Forecasting Challenge*.
+That's 1,826 days of sales from 2013 to 2017. If you don't have a Kaggle account,
+`tools/get_data.py` can generate a synthetic version instead.
+
+The data is split by date (never shuffled):
+
+| Years | Used for |
+|---|---|
+| 2013–2015 | Training |
+| 2016 | Online learning stream |
+| 2017 | Final test |
+
+To test how the agent handles change, demand in the 2016 stream is doubled from
+July 1 onward (`drift_factor: 2.0` in `params.yaml`). The 2017 test data is left
+as is.
+
+## How the agent works
+
+It's plain tabular Q-learning with ε-greedy exploration.
+
+- **What it sees (state):** how much stock is on hand (8 levels), the day of the
+  week (7), and whether demand is going up, down or flat (3). That's 168 states
+  in total.
+- **What it can do (actions):** order 0, 10, 20 or 40 units. Orders arrive
+  overnight.
+- **How it's scored (reward):** `5·sold − 2·ordered − 0.3·leftover − 2·unmet`
+- **How it learns:** `Q(s,a) ← Q(s,a) + α[r + γ·max Q(s',a') − Q(s,a)]` with
+  α = 0.1, γ = 0.95, trained for 600 episodes.
+
+## What's in the repo
+
 ```
-├── data/raw/sales.csv(.dvc)   raw data (DVC-tracked)
-├── data/processed/            prepare outputs (DVC-tracked)
-├── src/                       prepare, env, agent, train, evaluate, online_drift, feast_serve, utils
-├── feature_repo/              Feast definitions (optional)
-├── tools/get_data.py          creates data/raw/sales.csv
-├── tests/smoke_test.py        sanity checks
-├── models/q_table.json        trained policy (DVC-tracked)
-├── metrics/                   train/eval/drift JSON + plot CSVs
-├── results/                   figures
-├── params.yaml  dvc.yaml  dvc.lock  requirements.txt  .gitattributes
+├── data/raw/sales.csv(.dvc)   raw sales data (tracked by DVC)
+├── data/processed/            train / stream / test splits (tracked by DVC)
+├── src/                       pipeline code: prepare, env, agent, train,
+│                              evaluate, online_drift, feast_serve, utils
+├── feature_repo/              Feast setup (optional)
+├── tools/get_data.py          downloads or generates data/raw/sales.csv
+├── tests/smoke_test.py        quick sanity checks
+├── models/q_table.json        the trained agent (tracked by DVC)
+├── metrics/                   JSON results and plot data
+├── results/                   charts
+└── params.yaml, dvc.yaml, dvc.lock, requirements.txt
 ```
 
-## DVC Pipeline
+## The pipeline
+
 ```
 sales.csv.dvc → prepare → train → evaluate
                    └──────────┴──→ online_drift
 ```
-| Stage | Input | Output |
+
+| Stage | Takes | Produces |
 |---|---|---|
-| prepare | sales.csv, `prepare` params | train/stream/test parquet |
-| train | train.parquet, `env`,`train` params | q_table.json, training curve |
+| prepare | sales.csv | train, stream and test parquet files |
+| train | train.parquet | q_table.json and the training curve |
 | evaluate | q_table, test.parquet | eval.json, policy_comparison.png |
-| online_drift | q_table, stream.parquet, `online`,`drift` params | drift.json, online_drift.png |
+| online_drift | q_table, stream.parquet | drift.json, online_drift.png |
 
-## How to Run
+All the settings each stage uses live in `params.yaml`.
 
+## Running it yourself
 
-Requires **Python 3.11**. The commands below use Windows PowerShell.
+You'll need Python 3.11. The commands below are for Windows PowerShell.
 
-### 1. Clone and create the environment
+**1. Clone the repo and install everything**
 
 ```powershell
 git clone https://github.com/Az-main/Q-learning-MLSD-Project.git
@@ -63,10 +96,10 @@ py -3.11 -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-### 2. Configure DagsHub credentials
+**2. Add your DagsHub login**
 
-The project uses a shared DagsHub DVC remote. For a private repository, every
-collaborator must configure their own DagsHub username and access token:
+The data and model are stored on DagsHub. Tell DVC who you are, using your
+DagsHub username and an access token:
 
 ```powershell
 dvc remote modify origin --local auth basic
@@ -74,90 +107,91 @@ dvc remote modify origin --local user YOUR_DAGSHUB_USERNAME
 dvc remote modify origin --local password YOUR_DAGSHUB_TOKEN
 ```
 
-Replace `YOUR_DAGSHUB_USERNAME` and `YOUR_DAGSHUB_TOKEN` with your own values.
+This saves your login to `.dvc/config.local`. Git ignores that file, so your
+token stays on your machine. Don't commit it or share it.
 
-Credentials are stored in `.dvc/config.local`, which is ignored by Git. Never
-commit this file or share your access token.
-
-### 3. Download the DVC-tracked files
+**3. Download the data and model**
 
 ```powershell
 dvc pull
 ```
 
-This downloads the raw data, processed datasets, trained model, and other
-DVC-tracked pipeline outputs from DagsHub.
-
-### 4. Verify and run the project
+**4. Run and check**
 
 ```powershell
-dvc status
-dvc repro
-dvc dag
-dvc metrics show
-dvc plots show
-python tests/smoke_test.py
+dvc status                  # should say everything is up to date
+dvc repro                   # re-runs any stage that changed
+dvc dag                     # shows the pipeline
+dvc metrics show            # prints the results
+dvc plots show              # builds the charts
+python tests/smoke_test.py  # quick sanity check
 ```
 
-`dvc status` should report that the data and pipelines are up to date. DagsHub
-is the project's only DVC remote.
+## Working on it together
 
-## Collaboration Workflow
-
-Before starting work, synchronize the Git files and DVC-tracked artifacts:
+Before you start, grab the latest code and data:
 
 ```powershell
 git pull
 dvc pull
 ```
 
-After changing code, parameters, data, or pipeline outputs:
+When you've changed something, re-run the pipeline and push everything:
 
 ```powershell
 dvc repro
 dvc push
-git status
 git add .
-git commit -m "Describe the change"
+git commit -m "Short note on what changed"
 git push
 ```
 
-Each contributor should use their own Git branch when working simultaneously.
-This reduces conflicts and allows changes to be reviewed before merging.
+If more than one person is working at the same time, use separate branches.
+That way you won't overwrite each other's work, and changes can be reviewed
+before they're merged.
+
 ## Results
 
-| Policy (2017 test year) | Total reward | Service level | Stockout days | Avg leftover |
+Here's how the agent did on 2017, compared with three simple strategies:
+
+| Strategy | Total reward | Service level | Stockout days | Avg leftover |
 |---|---|---|---|---|
-| **Q-learning** | **18,197** | 0.86 | 0.47 | 3.9 |
-| Order recent average | 16,589 | 0.89 | 0.34 | 26.5 |
+| **Q-learning agent** | **18,197** | 0.86 | 0.47 | 3.9 |
+| Order the recent average | 16,589 | 0.89 | 0.34 | 26.5 |
 | Always order 20 | 15,258 | 0.87 | 0.38 | 27.8 |
-| Random | 12,980 | 0.81 | 0.27 | 27.3 |
+| Order at random | 12,980 | 0.81 | 0.27 | 27.3 |
 
-- The agent keeps the shelf lean (3.9 units left per night vs ~27), accepting small
-  shortfalls because holding stock costs money.
-- With γ = 0 the agent never orders: total reward −16,054, service level 0.2%.
-- Drift: concept drift was detected 4 days after the demand jump. Average daily reward
-  after drift was 51.5 with the retrain response and 13.7 without it.
+The agent earns the highest total reward by keeping the shelf lean. It has
+about 4 units left over each night, compared with about 27 for the other
+strategies. It runs short a bit more often, but because storage costs money,
+that trade-off pays off.
 
-![policy comparison](results/policy_comparison.png)
-### Drift Response Comparison
+I also checked what happens if the agent ignores the future (γ = 0). It ends up
+never ordering anything: total reward −16,054, and only 0.2% of demand gets met.
 
-The conditions before the simulated drift are nearly identical. After the
-demand increase, automatic retraining substantially improves performance.
+![Policy comparison](results/policy_comparison.png)
 
-| Metric | Response enabled | Response disabled |
+### When demand suddenly doubles
+
+The online stage spotted the jump in demand 4 days after it happened. I ran it
+twice, once letting the agent retrain when it spots the change and once
+without:
+
+| | Retraining on | Retraining off |
 |---|---:|---:|
-| Average daily reward before drift | 44.07 | 43.84 |
-| Average daily reward after drift | 51.51 | 13.66 |
-| Online total reward | 17,498.2 | 10,493.5 |
-| Retraining events | 3 | 0 |
+| Avg daily reward before the change | 44.07 | 43.84 |
+| Avg daily reward after the change | 51.51 | 13.66 |
+| Total reward over 2016 | 17,498.2 | 10,493.5 |
+| Times it retrained | 3 | 0 |
 
-The final project configuration uses `drift.respond: true`.
+Before the change, both runs score almost the same. After it, the version that
+retrains earns nearly four times as much per day. Retraining is turned on by
+default (`drift.respond: true` in `params.yaml`).
 
-#### Response Enabled
+**Retraining on**
 
-![Drift response enabled](results/online_drift_response_true.png)
+![Retraining on](results/online_drift_response_true.png)
 
-#### Response Disabled
+**Retraining off**
 
-![Drift response disabled](results/online_drift_response_false.png)
+![Retraining off](results/online_drift_response_false.png)
