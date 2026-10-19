@@ -52,7 +52,10 @@ stored there, renamed to its own hash. That is content-addressable storage.
 ## Step 4 — Remote (≈15 min)  → `dvc push` / `dvc pull`
 
 ```powershell
-dvc remote add -d localremote D:\dvcstore     # use C:\dvcstore if you have no D: drive
+dvc remote add -d origin https://dagshub.com/Az-main/Q-learning-MLSD-Project.dvc
+dvc remote modify origin --local auth basic
+dvc remote modify origin --local user <dagshub-username>
+dvc remote modify origin --local password <dagshub-token>
 dvc push
 git add .dvc/config
 git commit -m "Add DVC remote"

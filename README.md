@@ -99,9 +99,8 @@ dvc plots show
 python tests/smoke_test.py
 ```
 
-`dvc status` should report that the data and pipelines are up to date. The
-original `D:\dvcstore` remote is retained only as a local backup on the original
-development PC; DagsHub is the default shared remote.
+`dvc status` should report that the data and pipelines are up to date. DagsHub
+is the project's only DVC remote.
 
 ## Collaboration Workflow
 
